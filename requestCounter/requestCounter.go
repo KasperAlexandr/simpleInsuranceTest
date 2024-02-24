@@ -5,12 +5,14 @@ import (
 	"encoding/gob"
 	"log"
 	"os"
+	"sync"
 	"time"
 )
 
 type RequestCounter struct {
 	RequestsTime []time.Time
 	Window       time.Duration
+	Mutex        sync.Mutex
 }
 
 func NewRequestCounter(window time.Duration) *RequestCounter {
@@ -19,10 +21,16 @@ func NewRequestCounter(window time.Duration) *RequestCounter {
 }
 
 func (rc *RequestCounter) AddRequest() {
+	rc.Mutex.Lock()
+	defer rc.Mutex.Unlock()
+
 	rc.RequestsTime = append(rc.RequestsTime, time.Now())
 }
 
 func (rc *RequestCounter) CountRequestsInWindow() int {
+	rc.Mutex.Lock()
+	defer rc.Mutex.Unlock()
+
 	now := time.Now()
 	windowBoundary := now.Add(-rc.Window)
 
